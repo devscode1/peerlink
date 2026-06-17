@@ -1,0 +1,193 @@
+
+
+PRODUCT REQUIREMENTS DOCUMENT
+PeerLink Mobile
+Peer-to-Peer Encrypted Chat & File Transfer
+React Native  |  WebRTC  |  Cross-Internet
+Version1.0 — Initial PRDDateJune 2026StatusDraft — Under ReviewAuthorProduct TeamPlatformiOS & Android (React Native)AudienceEngineering, Design, QA, Stakeholders
+
+1. Executive Summary
+
+PeerLink Mobile is a React Native application that enables two mobile devices to establish a direct, encrypted, peer-to-peer communication channel over the internet — without routing user messages or files through any central server. Leveraging WebRTC DataChannels, PeerLink delivers near-native network speeds for both messaging and large file transfers across any network topology, including cellular, Wi-Fi, and mixed-carrier environments.
+
+The core value proposition is simplicity, speed, and privacy: once two devices connect, every byte transferred between them is encrypted end-to-end by the DTLS specification and never touches a relay server. The minimal signaling backend is used only for connection bootstrapping and carries zero user data.
+
+1.1 Problem Statement
+Existing messaging apps route all data through proprietary central servers — creating latency, limiting transfer sizes, and introducing a third-party data custodian. When two users want to transfer a 2 GB video file, current solutions either reject it, compress it, or take minutes. PeerLink removes the server from the data path entirely.
+1.2 Solution
+• Direct P2P connection between two devices using WebRTC DataChannel
+• Signaling-only backend (Node.js + Socket.IO) — handles handshake only, never user data
+• STUN for NAT traversal; TURN relay fallback only when P2P path is impossible
+• Binary file chunking with progress tracking, resume support, and integrity checking
+• Text messages delivered at sub-100ms latency on good connections
+
+
+2. Goals & Success Metrics
+
+2.1 Product Goals
+#GoalRationaleG1P2P connection in <5 seconds on both Wi-Fi and LTECore UX quality gate — users abandon on slow connectG2File transfer at ?80% of available bandwidthDifferentiation from server-routed alternativesG3End-to-end encrypted by default, no opt-outPrivacy-first product identityG4Works across carriers and NATs without manual configZero friction onboardingG5Support Android 10+ and iOS 14+Covers 90%+ of active devices globally
+2.2 Key Performance Indicators
+MetricTargetMeasurement MethodP2P connection time< 5 sec (p90)Client-side timestamp from initiate ? channel openMessage delivery latency< 100 ms (p95, same region)Timestamp delta, client to clientFile transfer throughput? 80% link bandwidthThroughput / speed test at transfer timeTURN fallback rate< 20% of sessionsSignaling server log: ICE type usedConnection success rate> 97%Sessions reaching open DataChannel / total attemptsTransfer resume success> 95%Resumed transfers completing / total interruptedCrash-free session rate> 99.5%Crashlytics / Sentry session tracking
+
+3. Scope
+
+3.1 In Scope — v1.0
+• Room-based device pairing (6-character code)
+• One-to-one real-time text messaging over DataChannel
+• Binary file transfer with chunking, progress bar, and SHA-256 integrity check
+• Connection status indicators (connecting, connected, disconnected, TURN fallback)
+• Message history stored locally (SQLite / AsyncStorage)
+• File save to device media library / documents folder
+• Signaling server (Node.js + Socket.IO) — cloud-deployable
+• STUN server configuration (Google public STUN)
+• TURN server integration (configurable endpoint, e.g. Coturn / Metered.ca)
+• iOS 14+ and Android 10+ support
+• Dark mode support
+
+3.2 Out of Scope — v1.0
+• Group chat (3+ participants)
+• Push notifications (requires APNs / FCM — adds server dependency)
+• Message search
+• Voice or video calls
+• Desktop (macOS / Windows) clients
+• Account registration or cloud profile sync
+• Emoji reactions, read receipts, typing indicators
+• App Store / Play Store submission (v1.0 is sideloaded/TestFlight)
+
+3.3 Future Considerations
+• Multi-party rooms via WebRTC mesh or SFU
+• Background transfer service for large files
+• Ephemeral message mode (auto-delete after read)
+• QR code pairing in addition to room codes
+• Optional server-side message delivery for offline users
+
+
+4. User Stories & Acceptance Criteria
+
+4.1 Connection & Pairing
+IDUser StoryAcceptance CriteriaUS-01As a user, I want to create a room and share a 6-char code so my peer can join.Room code displayed within 500ms; code is unique per session; peer joining with same code triggers DataChannel openUS-02As a user, I want to enter a room code and connect without any manual network config.Entering valid code initiates ICE negotiation automatically; no IP address or port input requiredUS-03As a user, I want clear connection status so I know if I'm connected.Status shows: Waiting, Connecting, Connected (P2P), Connected (Relay), Disconnected with distinct UI statesUS-04As a user, I want automatic reconnection if the connection drops briefly.App retries ICE restart up to 3 times with exponential back-off before showing 'Reconnect' button
+4.2 Messaging
+IDUser StoryAcceptance CriteriaUS-05As a user, I want to send text messages that appear instantly.Message visible in sender's chat within 50ms of send; appears on receiver's device within 150ms on same-region LTEUS-06As a user, I want messages to be timestamped.Each message shows HH:MM timestamp; today shows time only, older shows date + timeUS-07As a user, I want message history to persist after closing and reopening the app.Messages stored in local SQLite; history loads on app open before new connection is establishedUS-08As a user, I want to send messages of up to 100,000 characters.Long messages are fragmented internally across multiple DataChannel sends and reassembled
+4.3 File Transfer
+IDUser StoryAcceptance CriteriaUS-09As a user, I want to send any file type up to 4 GB.File picker allows any file type; transfer completes successfully for files up to 4 GB in testingUS-10As a user, I want to see transfer progress in real time.Progress bar updates every chunk (max 500ms latency); shows speed (MB/s) and ETAUS-11As a user, I want to verify the received file is not corrupted.SHA-256 hash computed on sender, transmitted in metadata, verified on receiver; mismatch shows errorUS-12As a user, I want to pause and resume a file transfer.Pause halts chunk transmission; resume continues from last ACKed chunk number; works after brief disconnectUS-13As a user, I want received files saved to my device.Photos/videos go to media library; other files go to app Documents folder; user notified on saveUS-14As a user, I want to cancel an in-progress transfer.Cancel sends abort signal; sender stops chunking; partial data removed from receiver storage
+
+5. Technical Architecture
+
+5.1 System Components
+ComponentTechnologyResponsibilityReact Native AppRN 0.73+, TypeScriptUI, state management, WebRTC peer, file I/OWebRTC Layerreact-native-webrtcDataChannel, ICE, DTLS, SDP offer/answerSignaling ServerNode.js + Socket.IOSDP/ICE relay only — zero user dataSTUN ServerGoogle stun.l.google.com:19302Public IP discovery for NAT traversalTURN ServerCoturn (self-hosted) or Metered.caRelay fallback when direct P2P blockedLocal StorageSQLite (op-sqlite) + RNFSMessage history, transfer state, settingsState ManagementZustand + React QueryConnection state, message list, transfer queue
+5.2 Connection Establishment Flow
+The following sequence describes the complete connection establishment between Device A (initiator) and Device B (joiner):
+
+• Step 1 — Room creation: Device A requests a room from signaling server, receives a 6-char alphanumeric code and joins the Socket.IO room.
+• Step 2 — Room join: Device B enters the code; signaling server emits a 'peer-joined' event to both parties.
+• Step 3 — SDP Offer: Device A creates an RTCPeerConnection, creates a DataChannel, calls createOffer(), sets local description, sends SDP offer via signaling server.
+• Step 4 — SDP Answer: Device B receives offer, sets remote description, calls createAnswer(), sets local description, sends SDP answer via signaling server.
+• Step 5 — ICE Exchange: Both devices emit ICE candidates as they are gathered; each sets received candidates on the peer connection via addIceCandidate().
+• Step 6 — P2P Attempt: ICE agent attempts direct connection (host candidates), then reflexive (STUN), then relay (TURN) in order of priority.
+• Step 7 — DataChannel Open: Once ICE completes, the DataChannel fires 'open' event. Both devices update UI to 'Connected'. Signaling server connection is no longer needed and can be dropped.
+
+5.3 File Transfer Protocol
+Files are transferred as a sequence of binary chunks over the DataChannel with a control protocol layered in JSON messages:
+
+• TRANSFER_INIT: sender emits { type, fileId, fileName, fileSize, mimeType, chunkSize, totalChunks, sha256 }
+• TRANSFER_ACCEPT / TRANSFER_REJECT: receiver responds with acceptance or rejection (e.g. insufficient storage)
+• CHUNK: sender emits ArrayBuffer prefixed with 8-byte header { fileId (4B), chunkIndex (4B) }
+• CHUNK_ACK: receiver acknowledges every N chunks (configurable, default: every 16 chunks) for flow control
+• TRANSFER_COMPLETE: sender emits after final chunk; receiver computes SHA-256 and responds with VERIFY_OK or VERIFY_FAIL
+• TRANSFER_PAUSE / TRANSFER_RESUME: either party can pause; resume includes last ACKed chunk index
+• TRANSFER_ABORT: either party cancels; receiver deletes partial file
+
+Chunk size is dynamically tuned: starts at 16 KB, increases to 64 KB if throughput is stable, reduces on buffer pressure. The DataChannel bufferedAmountLowThreshold is used to gate chunk emission and prevent memory overflow on slow links.
+
+5.4 Key Library Versions
+PackageMin VersionNotesreact-native0.73.0New architecture (Fabric) compatiblereact-native-webrtc118.0.0Must match Chromium M118+ for Android 10 compatsocket.io-client4.7.0Matching server version requiredop-sqlite5.0.0High-perf SQLite for message storagereact-native-fs2.20.0File read/write for transfer chunksreact-native-document-picker9.0.0Cross-platform file pickerreact-native-camera-roll7.4.0Save media to device galleryzustand4.5.0Lightweight state management
+
+6. Functional Requirements
+
+6.1 Screens & Navigation
+ScreenRouteKey ElementsHome/Create Room button, Join Room input, app version, settings iconConnecting/connectingAnimated status, room code (if host), cancel button, ICE state debug (dev only)Chat/chatMessage list, input bar, attach button, connection pill, peer nameFile Preview/file-previewFile name, size, type icon, Send / Cancel buttonsTransfer Progress/transferProgress bar, speed, ETA, Pause / Cancel, file nameSettings/settingsCustom TURN config, display name, clear history, about
+6.2 Connection States
+• IDLE: No active session, home screen
+• WAITING: Room created, awaiting peer to join (showing room code)
+• NEGOTIATING: SDP offer/answer and ICE exchange in progress
+• CONNECTED_P2P: Direct DataChannel open, P2P path confirmed
+• CONNECTED_RELAY: DataChannel open via TURN relay
+• RECONNECTING: Connection dropped, ICE restart in progress
+• FAILED: All ICE candidates exhausted, manual retry required
+• CLOSED: User-initiated disconnect
+
+6.3 Message Data Model
+Each message stored locally has the schema: { id: UUID, roomId: string, senderId: 'local' | 'remote', type: 'text' | 'file', content: string, fileName?: string, fileSize?: number, fileMimeType?: string, filePath?: string, status: 'sent' | 'delivered' | 'error', timestamp: ISO8601, transferProgress?: number }
+
+
+7. Non-Functional Requirements
+
+7.1 Performance
+RequirementTargetPriorityApp cold start time< 2 seconds to Home screenP0P2P connection time< 5 sec p90 on LTEP0Message send-to-receive latency< 100 ms p95 same regionP0File transfer throughput> 80% of link bandwidthP1Memory usage (chat screen)< 150 MB RSSP1Battery drain during idle connection< 2% / hourP2UI frame rate during transfer> 55 FPS (Fabric renderer)P1
+7.2 Security & Privacy
+• All DataChannel traffic is encrypted using DTLS 1.2 or 1.3 as mandated by the WebRTC specification — no exceptions, no opt-out.
+• The signaling server must not log, store, or inspect SDP payloads beyond routing them to the correct room. Rooms are automatically deleted from memory 60 seconds after both peers disconnect.
+• TURN server credentials must be time-limited (TTL 24h) and generated per-session using HMAC-SHA1 as per RFC 5766.
+• Room codes must have sufficient entropy to prevent brute-force joining: 6 alphanumeric characters (case-sensitive) yields 56 billion combinations; rooms expire after 10 minutes of inactivity.
+• File integrity is verified with SHA-256 after every transfer. The hash is computed client-side and transmitted in the TRANSFER_INIT control message.
+• No analytics, telemetry, or crash reporting that includes message content or file metadata is permitted.
+• The app must not request location, contacts, or camera permissions. Only storage and microphone (future) are permissible.
+
+7.3 Reliability
+• ICE restart must be attempted automatically on connection drop before surfacing an error to the user.
+• File transfers interrupted by a connection drop must be resumable from the last ACKed chunk — no full restart.
+• The app must handle background / foreground transitions without losing connection state (iOS background modes: voip socket keepalive).
+• The signaling server must be horizontally scalable with Redis pub/sub for room state (Socket.IO Redis adapter).
+
+7.4 Accessibility
+• All interactive elements must meet WCAG 2.1 AA touch target size (44x44pt minimum).
+• VoiceOver (iOS) and TalkBack (Android) must announce message receipt, connection status changes, and transfer progress.
+• Color is never the sole indicator of status — icons and labels supplement all color-coded states.
+• System font size preferences must be respected (Dynamic Type on iOS, font scale on Android).
+
+
+8. Signaling Server Specification
+
+8.1 API Events
+EventDirectionPayloadDescriptioncreate-roomClient ? Server{ displayName }Server responds with { roomId } — 6-char codejoin-roomClient ? Server{ roomId, displayName }Server emits peer-joined to both parties or room-full if occupiedofferClient ? Server{ roomId, sdp }Server relays SDP offer to the other peer in the roomanswerClient ? Server{ roomId, sdp }Server relays SDP answer to the initiating peerice-candidateClient ? Server{ roomId, candidate }Server relays ICE candidate to the other peerpeer-joinedServer ? Client{ peerId, displayName }Emitted to both peers when the room is full (2 peers)peer-disconnectedServer ? Client{ peerId }Emitted to remaining peer when other disconnectsroom-fullServer ? Client{ roomId }Emitted to client attempting to join an occupied roomroom-not-foundServer ? Client{ roomId }Emitted when joining with invalid or expired code
+8.2 Deployment Requirements
+• Runtime: Node.js 20 LTS
+• Framework: Express 4 + Socket.IO 4 with Redis adapter for multi-instance scaling
+• Hosting: any platform supporting persistent WebSocket connections (Railway, Fly.io, Render, or self-hosted)
+• SSL: required — WebRTC will not negotiate over non-secure WebSocket (ws://) in production
+• Room cleanup: in-memory rooms purged after 10 minutes of inactivity or when both peers disconnect
+• Rate limiting: max 10 room creations per IP per minute; max 30 ICE candidate relays per second per room
+• Health endpoint: GET /health returns { status: 'ok', rooms: N, connections: N }
+
+
+9. Risks & Mitigations
+
+RiskLikelihoodImpactMitigationSymmetric NAT blocks P2P — TURN requiredMediumHigher infra cost, 20-30% higher latencyBudget TURN server capacity; use Metered.ca pay-per-use for v1.0react-native-webrtc lags behind ChromiumLow-MedMissing features, security patchesPin to tested version; fork + patch if critical CVE foundiOS background killing DataChannelHighDisconnection when app backgroundedImplement VoIP push + background socket keepalive; detect and auto-reconnect on foregroundLarge file OOM on low-end AndroidMediumApp crash during transferStream chunks from disk; never buffer entire file in memory; enforce 64 KB max chunkRoom code collision or guessingLowUnauthorized session joinEnforce 10-minute room TTL; add optional 4-digit PIN for sensitive sessions in v1.1Signaling server DoSLow-MedNo new connections possibleRate limiting, room caps, WAF in front of signaling serverSHA-256 mismatch on large filesLowUser distrust, re-transfer neededAutomatic 1 retry with fresh transfer; log hash mismatches for debugging
+
+10. Milestones & Timeline
+
+PhaseMilestoneDeliverablesWeeks1FoundationProject setup, RN boilerplate, signaling server (local), WebRTC handshake proof-of-concept, DataChannel text echo1–22Core MessagingFull chat UI, message persistence (SQLite), connection state machine, reconnection logic, basic STUN config3–53File TransferFile picker integration, chunk engine, progress UI, SHA-256 verification, pause/resume/cancel, save to device6–94Network HardeningTURN integration, dynamic chunk sizing, iOS background mode, Android foreground service for transfers10–115Polish & QAAccessibility audit, dark mode, edge case testing (large files, poor networks), performance profiling12–136Beta ReleaseTestFlight + internal APK distribution, signaling server cloud deploy, TURN server prod config, monitoring14
+10.1 Definition of Done
+• All P0 user stories pass acceptance criteria on both iOS 17 and Android 13 physical devices
+• All KPI targets met in internal testing across LTE + Wi-Fi network conditions
+• No P0 or P1 bugs open
+• Security review completed: DTLS confirmed, signaling server passes OWASP top-10 check
+• Performance: 60 FPS during active transfer, <2s cold start on mid-range device
+• Accessibility: VoiceOver and TalkBack audit passed
+
+
+11. Open Questions
+
+#QuestionOwnerTarget DateQ1Should the room code be case-insensitive to reduce entry errors?ProductSprint 1Q2What is the maximum file size we will officially support and test to?EngineeringSprint 1Q3Will we self-host the TURN server or use a managed provider for v1.0?InfraSprint 2Q4Should message history be clearable per-room or globally?ProductSprint 2Q5Do we need a custom display name or is device name (hostname) sufficient?Product / DesignSprint 1Q6Should the app require biometric auth before showing chat history?SecuritySprint 3Q7What is the retention policy for signaling server connection logs?Legal / InfraSprint 2
+
+12. Glossary
+
+TermDefinitionWebRTCWeb Real-Time Communication — W3C/IETF standard for browser and native P2P audio, video, and dataDataChannelThe WebRTC API for arbitrary binary or text data transfer between peers, independent of media streamsSDPSession Description Protocol — text format describing media/data capabilities used in WebRTC offer/answer negotiationICEInteractive Connectivity Establishment — RFC 8445 process for finding the best network path between two peersSTUNSession Traversal Utilities for NAT — server that helps a device discover its public IP and portTURNTraversal Using Relays around NAT — relay server used when direct P2P is impossible due to strict NAT/firewallDTLSDatagram Transport Layer Security — the encryption protocol used to secure WebRTC DataChannel connectionsNATNetwork Address Translation — router mechanism that maps private IPs to a shared public IP; the primary P2P obstacleSignaling ServerLightweight server used only to exchange WebRTC handshake messages; never sees user dataChunkA fixed-size binary fragment of a file used in chunked file transfer to avoid memory overflowSHA-256Secure Hash Algorithm 256-bit — cryptographic hash used to verify file integrity after transferP2PPeer-to-peer — direct device-to-device connection with no server in the data pathICE RestartRe-initiating the ICE negotiation on an existing connection to recover from a network change or drop
+
+
+PeerLink Mobile — PRD v1.0
+This document is confidential and intended for internal use only. Do not distribute.
+PeerLink — Product Requirements Document	CONFIDENTIAL  |  v1.0
+
+PeerLink Mobile  |  Confidential	Page 1
+

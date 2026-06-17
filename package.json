@@ -1,0 +1,26 @@
+{
+  "name": "peerlink",
+  "version": "1.0.0",
+  "description": "Peer-to-peer encrypted chat and file transfer for React Native",
+  "private": true,
+  "workspaces": [
+    "server",
+    "mobile",
+    "shared"
+  ],
+  "installConfig": {
+    "hoistingLimits": "workspaces"
+  },
+  "scripts": {
+    "dev": "concurrently \"npm run dev --workspace=server\" \"npm run dev --workspace=mobile\"",
+    "dev:server": "npm run dev --workspace=server",
+    "dev:mobile": "npm run dev --workspace=mobile",
+    "build": "npm run build --workspaces",
+    "lint": "npm run lint --workspaces",
+    "type-check": "npm run type-check --workspaces"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.0",
+    "typescript": "^5.2.0"
+  }
+}

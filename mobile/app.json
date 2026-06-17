@@ -1,0 +1,77 @@
+{
+  "expo": {
+    "name": "PeerLink",
+    "slug": "peerlink",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#1a1a1a"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTabletMode": false,
+      "bundleIdentifier": "com.peerlink.mobile",
+      "buildNumber": "1",
+      "infoPlist": {
+        "NSLocalNetworkUsageDescription": "PeerLink uses local network for peer discovery",
+        "NSBonjourServices": [
+          "_webrtc._tcp"
+        ],
+        "NSMicrophoneUsageDescription": "Microphone access is needed for future voice features"
+      }
+    },
+    "android": {
+      "package": "com.peerlink.mobile",
+      "versionCode": 1,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#1a1a1a"
+      },
+      "permissions": [
+        "android.permission.INTERNET",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.ACCESS_MEDIA_LOCATION"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
+    },
+    "plugins": [
+      [
+        "expo-document-picker",
+        {
+          "iCloudContainerEnvironment": "Production"
+        }
+      ],
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "Allow $(PRODUCT_NAME) to access your photos.",
+          "savePhotosPermission": "Allow $(PRODUCT_NAME) to save photos.",
+          "isAccessMediaLocationEnabled": true
+        }
+      ]
+    ],
+    "scheme": "peerlink",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "owner": "yashwillhaunt",
+    "runtimeVersion": "1.0.0",
+    "extra": {
+      "eas": {
+        "projectId": "b051cb35-b8a0-4ab4-b346-15e07532081d"
+      }
+    }
+  }
+}
