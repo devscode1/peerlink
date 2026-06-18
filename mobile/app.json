@@ -15,7 +15,7 @@
       "**/*"
     ],
     "ios": {
-      "supportsTabletMode": false,
+      "supportsTablet": false,
       "bundleIdentifier": "com.peerlink.mobile",
       "buildNumber": "1",
       "infoPlist": {
