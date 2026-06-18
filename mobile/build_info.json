@@ -1,0 +1,45 @@
+﻿{
+  "id": "405fe644-0054-46c1-a2b9-dca28fad083f",
+  "status": "ERRORED",
+  "platform": "ANDROID",
+  "error": {
+    "errorCode": "EAS_BUILD_UNKNOWN_GRADLE_ERROR",
+    "message": "Gradle build failed with unknown error. See logs for the \"Run gradlew\" phase for more information."
+  },
+  "artifacts": {},
+  "initiatingActor": {
+    "id": "90adc164-24d8-4410-905d-544eeb853920",
+    "displayName": "yashwillhaunt"
+  },
+  "logFiles": [
+    "https://storage.googleapis.com/eas-workflows-production/logs/b051cb35-b8a0-4ab4-b346-15e07532081d/405fe644-0054-46c1-a2b9-dca28fad083f/2026-06-18T01%3A29%3A22Z-c794d8ff-6825-4d74-a9ed-25b0520fb29d.txt?X-Goog-Algorithm=GOOG4-RSA-SHA256&X-Goog-Credential=www-production%40exponentjs.iam.gserviceaccount.com%2F20260618%2Fauto%2Fstorage%2Fgoog4_request&X-Goog-Date=20260618T013823Z&X-Goog-Expires=900&X-Goog-SignedHeaders=host&X-Goog-Signature=1c630d1d5badcca5818e26b8697dc711ef548a8e4954a103a16c5c8b37ab296c7b7d228dfb58d5ea7befd6bb384b5d2378bbf5195378210ac9c29a71e54c8e17f33b20bfbca4fc5c3fa2077c95eb4a910a1d118776e5dd7611eccf1604a2473b586ca197bf125e0c8f67cefc654389b2be146bf53348b8efde7b5f13d5372bb6ad593571032bc8ba1af996eb23c5745e231388e6228130966eeb15af35601575afd6788743dc23a26ad601d29603d4338790d21f8fc1f3c50e0326d80a9e1c5700f0e173b11a6a1bbed813c9a81e0240deadde07c5fbb6c5e116201f1621f0f55865ba4729705df620f0f7a68662159acb422f76b970262a26d73426f0d40af8"
+  ],
+  "project": {
+    "id": "b051cb35-b8a0-4ab4-b346-15e07532081d",
+    "name": "peerlink",
+    "slug": "peerlink",
+    "ownerAccount": {
+      "id": "f6081b2d-184f-4df9-8836-c70399086a9c",
+      "name": "yashwillhaunt"
+    }
+  },
+  "distribution": "INTERNAL",
+  "buildProfile": "preview",
+  "sdkVersion": "51.0.0",
+  "appVersion": "1.0.0",
+  "appBuildVersion": "1",
+  "runtimeVersion": "1.0.0",
+  "gitCommitHash": "9089bbc78d63ab4d10d36b65e450b1964185d730",
+  "gitCommitMessage": "Update deps to Expo SDK 51 compatible versions",
+  "priority": "NORMAL_PLUS",
+  "createdAt": "2026-06-18T01:29:18.197Z",
+  "updatedAt": "2026-06-18T01:33:13.019Z",
+  "completedAt": "2026-06-18T01:33:12.865Z",
+  "expirationDate": "2026-07-02T01:29:18.236Z",
+  "isForIosSimulator": false,
+  "metrics": {
+    "buildWaitTime": 3145,
+    "buildQueueTime": 5390,
+    "buildDuration": 226133
+  }
+}

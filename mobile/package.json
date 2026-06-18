@@ -27,6 +27,7 @@
     "expo-document-picker": "~12.0.0",
     "expo-file-system": "~17.0.0",
     "expo-media-library": "~16.0.0",
+    "expo-modules-autolinking": "^56.0.16",
     "expo-secure-store": "~13.0.0",
     "expo-sqlite": "~14.0.0",
     "expo-status-bar": "~1.12.1",
