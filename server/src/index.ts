@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { Request, Response } from 'express';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import { createAdapter } from '@socket.io/redis-adapter';
@@ -21,7 +21,7 @@ const CORS_ORIGIN = process.env.CORS_ORIGIN || (NODE_ENV === 'production' ? '' :
 app.use(express.json());
 app.use(cors({ origin: CORS_ORIGIN || false }));
 
-app.get('/health', (_req, res) => {
+app.get('/health', (_req: Request, res: Response) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
